@@ -1,44 +1,26 @@
 package org.example.ocs.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.example.ocs.kafka.KafkaProducerService;
-import org.example.ocs.model.RouteRequest;
-import org.example.ocs.model.RouteResponse;
+import org.example.ocs.model.OsrmApiResponse;
+import org.example.ocs.model.OsrmRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OsrmService {
+    private final WebClient.Builder webClientBuilder;
 
-    private final KafkaProducerService producer;
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Value("${osrm.base-url}")
+    private String osrmBaseUrl;
 
-    public void handleRouteRequest(RouteRequest request) {
-        try {
-            String url = "http://localhost:5000/route/v1/driving/"
-                    + request.getFrom() + ";" + request.getTo()
-                    + "?overview=false";
-
-            log.info("🌍 Odpytuję OSRM: {}", url);
-            String result = restTemplate.getForObject(url, String.class);
-            JsonNode json = mapper.readTree(result);
-
-            JsonNode route = json.get("routes").get(0);
-            RouteResponse response = new RouteResponse();
-            response.setDistance(route.get("distance").asDouble());
-            response.setDuration(route.get("duration").asDouble());
-            response.setWeight(route.get("weight").asDouble());
-
-            producer.send(response);
-
-        } catch (Exception e) {
-            log.error("❌ Błąd podczas obsługi trasy: {}", e.getMessage(), e);
-        }
+    public Mono<OsrmApiResponse> getRoute(OsrmRequest request) {
+        return webClientBuilder.build()
+                .get()
+                .uri(osrmBaseUrl + "/route/v1/{profile}/{coordinates}?overview=false", request.getProfile(), request.getCoordinates())
+                .retrieve()
+                .bodyToMono(OsrmApiResponse.class);
     }
 }

@@ -1,26 +1,20 @@
-package org.example.ocs.kafka;
+package org.example.ocs.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.example.ocs.model.RouteResponse;
+import org.example.ocs.model.OsrmApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class KafkaProducerService {
+    private final KafkaTemplate<String, OsrmApiResponse> kafkaTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(KafkaProducerService.class);
 
-    private final KafkaTemplate<String, RouteResponse> kafkaTemplate;
-
-    public void send(RouteResponse response) {
-        log.info("📤 Wysyłam odpowiedź do Kafka: {}", response);
-        kafkaTemplate.send("oms.osrm.route.response", response);
-
-        kafkaTemplate.send("topic", msg).addCallback(
-                success -> log.info("✔️ Wysłano: {}", msg),
-                failure -> log.error("❌ Błąd wysyłki: {}", failure.getMessage())
-        );
+    public void sendMessage(String topic, OsrmApiResponse response) {
+        kafkaTemplate.send(topic, response);
+        logger.info("Sent OSRM response to {}: {}", topic, response);
     }
-
 }
