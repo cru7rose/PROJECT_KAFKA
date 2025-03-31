@@ -16,5 +16,11 @@ public class KafkaProducerService {
     public void send(RouteResponse response) {
         log.info("📤 Wysyłam odpowiedź do Kafka: {}", response);
         kafkaTemplate.send("oms.osrm.route.response", response);
+
+        kafkaTemplate.send("topic", msg).addCallback(
+                success -> log.info("✔️ Wysłano: {}", msg),
+                failure -> log.error("❌ Błąd wysyłki: {}", failure.getMessage())
+        );
     }
+
 }
