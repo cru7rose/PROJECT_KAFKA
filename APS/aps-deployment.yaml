@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aps
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aps
+  template:
+    metadata:
+      labels:
+        app: aps
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: aps
+          image: cru7rose/aps:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "host.docker.internal:29092"
+            - name: KAFKA_TOPIC_STATUS
+              value: "status_updates_topic"
+            - name: ALGOPLANNER_API_URL
+              value: "https://ap.danxils.com/api"

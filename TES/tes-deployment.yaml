@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tes
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tes
+  template:
+    metadata:
+      labels:
+        app: tes
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: tes
+          image: cru7rose/tes:cdc-lsn
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:sqlserver://apollo.intercars.local:1433;databaseName=TrackIT;encrypt=true;trustServerCertificate=true;"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: password
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "host.docker.internal:29092"
+            - name: KAFKA_TOPIC_STATUS
+              value: "status_updates_topic"
+          ports:
+            - containerPort: 8080
